@@ -40,8 +40,11 @@ composer test
 composer test -- ./tests/Feature/SampleControllerTest.php
 ```
 
-### 注意事項
-Testは`.env` ではなく、`.env.testing` で動くので注意。
+### ブランチ運用
+- mainは本番環境
+URI: `https://sample.com`
+- developは開発環境
+URI: `https://dev.sample.com`
 
 ## コーディングルール
 https://github.com/alexeymezenin/laravel-best-practices/blob/master/japanese.md
