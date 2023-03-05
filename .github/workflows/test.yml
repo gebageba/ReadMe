@@ -69,9 +69,11 @@ jobs:
       - name: migrate
         run: php artisan migrate
 
-      - name: Execute tests via PHPUnit
+      - name: Execute tests (Unit tests) via PHPUnit
         run: |
-          ./vendor/bin/phpunit
+          php artisan config:clear
+          ./vendor/bin/phpunit --coverage-text --colors=never --testsuite Unit > storage/logs/coverage.log
+          cat storage/logs/coverage.log
 
       - name: Cat Test Result
         run: |
