@@ -1,0 +1,86 @@
+name: Deploy to development environment
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: testing
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      APP_ENV: testing
+      APP_URL: http://localhost
+      APP_HOST: localhost.local
+
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          tools: composer:v2
+
+      - name: Cache vendor
+        id: cache
+        uses: actions/cache@v1
+        with:
+          path: ./vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: composer install
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: composer install -n --prefer-dist
+
+      - name: composer dump autoload
+        run: composer dump-autoload
+
+      - name: generate key
+        run: php artisan key:generate --env=testing
+
+      - name: migrate
+        run: php artisan migrate
+
+      - name: Execute tests via PHPUnit
+        run: |
+          ./vendor/bin/phpunit
+
+      - name: Slack Notification on Success
+        uses: rtCamp/action-slack-notify@master
+        if: success()
+        env:
+          SLACK_CHANNEL: sample-ci
+          SLACK_TITLE: Test Success [main]
+          SLACK_COLOR: good
+
+      - name: Slack Notification on Failure
+        uses: rtCamp/action-slack-notify@master
+        if: failure()
+        env:
+          SLACK_CHANNEL: sample-ci
+          SLACK_TITLE: Test Failure [main]
+          SLACK_COLOR: danger
