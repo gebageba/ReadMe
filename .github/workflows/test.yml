@@ -73,16 +73,6 @@ jobs:
         run: |
           ./vendor/bin/phpunit
 
-      - name: Execute tests (Unit tests) via PHPUnit
-        run: |
-          php artisan config:clear
-          ./vendor/bin/phpunit --coverage-text --colors=never --testsuite Unit > storage/logs/coverage.log
-          cat storage/logs/coverage.log
-        env:
-          DB_PASSWORD: ${{ secrets.LOCAL_MYSQL_ROOT_PASSWORD }}
-          DB_USERNAME: ${{ secrets.LOCAL_DB_USERNAME }}
-          DB_HOST: 127.0.0.1
-
       - name: Cat Test Result
         run: |
           cat storage/logs/coverage.log
